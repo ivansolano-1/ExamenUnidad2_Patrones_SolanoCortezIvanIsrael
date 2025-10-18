@@ -1,0 +1,129 @@
+using System;
+using System.Collections.Generic;
+
+//ENUM DE ESTADOS
+public enum EstadoLibro
+{
+    Disponible,
+    Prestado,
+    EnMantenimiento
+}
+//CLASE LIBRO
+public class Libro
+{
+    public string Titulo { get; private set; }
+    public EstadoLibro Estado { get; set; }
+    public Libro(string titulo)
+    {
+        Titulo = titulo;
+        Estado = EstadoLibro.Disponible;
+    }
+    public override string ToString()
+    {
+        return $"{Titulo} - Estado: {Estado}";
+    }
+}
+//PATRÓN OBJECT POOL
+public class PoolLibros
+{
+    private List<Libro> _librosDisponibles = new List<Libro>();
+    private List<Libro> _librosPrestados = new List<Libro>();
+    public PoolLibros(List<Libro> librosIniciales)
+    {
+        _librosDisponibles.AddRange(librosIniciales);
+    }
+    public Libro PrestarLibro()
+    {
+        foreach (var libro in _librosDisponibles)
+        {
+            if (libro.Estado == EstadoLibro.Disponible)
+            {
+                libro.Estado = EstadoLibro.Prestado;
+                _librosDisponibles.Remove(libro);
+                _librosPrestados.Add(libro);
+                return libro;
+            }
+        }
+        Console.WriteLine("No hay libros disponibles para préstamo.");
+        return null;
+    }
+    public void DevolverLibro(Libro libro)
+    {
+        if (_librosPrestados.Contains(libro))
+        {
+            libro.Estado = EstadoLibro.Disponible;
+            _librosPrestados.Remove(libro);
+            _librosDisponibles.Add(libro);
+        }
+    }
+    public void MostrarEstadoLibros()
+    {
+        Console.WriteLine("\n Libros disponibles ");
+        foreach (var l in _librosDisponibles)
+            Console.WriteLine(l);
+        Console.WriteLine("\n Libros prestados ");
+        foreach (var l in _librosPrestados)
+            Console.WriteLine(l);
+    }
+}
+//PATRÓN SINGLETON
+public class SistemaBiblioteca
+{
+    private static SistemaBiblioteca _instancia;
+    private PoolLibros _poolLibros;
+    private SistemaBiblioteca() { }
+    public static SistemaBiblioteca Instancia
+    {
+        get
+        {
+            if (_instancia == null)
+                _instancia = new SistemaBiblioteca();
+            return _instancia;
+        }
+    }
+    public void InicializarSistema(List<Libro> libros)
+    {
+        _poolLibros = new PoolLibros(libros);
+    }
+    public void PrestarLibro()
+    {
+        var libro = _poolLibros.PrestarLibro();
+        if (libro != null)
+            Console.WriteLine($"Se prestó: {libro.Titulo}");
+    }
+    public void DevolverLibro(Libro libro)
+    {
+        _poolLibros.DevolverLibro(libro);
+        Console.WriteLine($"Se devolvió: {libro.Titulo}");
+    }
+    public void MostrarLibros()
+    {
+        _poolLibros.MostrarEstadoLibros();
+    }
+}
+//PROGRAMA PRINCIPAL
+public class Program
+{
+    public static void Main()
+    {
+        //Creación de libros
+        var libros = new List<Libro>
+        {
+            new Libro("La vida de Scrim"),
+            new Libro("paradise"),
+            new Libro("Bags under my eyes")
+        };
+        //Inicializar Singleton
+        var sistema = SistemaBiblioteca.Instancia;
+        sistema.InicializarSistema(libros);
+        //Estado inicial
+        sistema.MostrarLibros();
+        //Prestar libros (Object Pool)
+        sistema.PrestarLibro();
+        sistema.PrestarLibro();
+        sistema.MostrarLibros();
+        //Devolver un libro
+        sistema.DevolverLibro(libros[0]);
+        sistema.MostrarLibros();
+    }
+}
