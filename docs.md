@@ -1,0 +1,2 @@
+
+[ExamenU2.docx.pdf](https://github.com/user-attachments/files/22981829/ExamenU2.docx.pdf)
